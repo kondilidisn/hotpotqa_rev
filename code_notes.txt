@@ -35,3 +35,48 @@ These 3 numbers change from on batch to another :
 Number of sentences = 65 , Words on sentences in total : 1767 , Words on the question : 17
 The mapping variables (start_mapping, end_mapping) are one-hot vectors, that simply yell where every sentence begin and where every sentence ends
 The all_mapping variable, just has 1 from the start to the end of some sentence, indicating with 1 all words that belong to that sentence
+
+prints inside forward, upper part :
+
+        print('context_mask: ',context_mask.shape)
+        print('ques_mask: ',ques_mask.shape)
+        context_mask:  torch.Size([1, 1307])
+        ques_mask:  torch.Size([1, 29])
+
+        context_ch = self.char_emb(context_char_idxs.contiguous().view(-1, char_size)).view(bsz * para_size, char_size, -1)
+        ques_ch = self.char_emb(ques_char_idxs.contiguous().view(-1, char_size)).view(bsz * ques_size, char_size, -1)
+
+
+        print('context_ch: ',context_ch.shape)
+        print('ques_ch: ',ques_ch.shape)
+
+        context_ch:  torch.Size([1307, 16, 8])
+        ques_ch:  torch.Size([29, 16, 8])
+
+
+        context_ch = self.char_cnn(context_ch.permute(0, 2, 1).contiguous()).max(dim=-1)[0].view(bsz, para_size, -1)
+        ques_ch = self.char_cnn(ques_ch.permute(0, 2, 1).contiguous()).max(dim=-1)[0].view(bsz, ques_size, -1)
+
+
+        print('context_ch: ',context_ch.shape)
+        print('ques_ch: ',ques_ch.shape)
+        context_ch:  torch.Size([1, 1307, 100])
+        ques_ch:  torch.Size([1, 29, 100])
+
+        context_word = self.word_emb(context_idxs)
+        ques_word = self.word_emb(ques_idxs)
+
+
+        print('context_word: ',context_word.shape)
+        print('ques_word: ',ques_word.shape)
+        context_word:  torch.Size([1, 1307, 300])
+        ques_word:  torch.Size([1, 29, 300])
+
+        context_output = torch.cat([context_word, context_ch], dim=2)
+        ques_output = torch.cat([ques_word, ques_ch], dim=2)
+
+
+        print('context_output: ',context_output.shape)
+        print('ques_output: ',ques_output.shape)
+        context_output:  torch.Size([1, 1307, 400])
+        ques_output:  torch.Size([1, 29, 400])
