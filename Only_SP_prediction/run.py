@@ -1,3 +1,8 @@
+
+
+
+
+
 import ujson as json
 import numpy as np
 from tqdm import tqdm
@@ -30,9 +35,9 @@ def create_exp_dir(path, scripts_to_save=None):
             dst_file = os.path.join(path, 'scripts', os.path.basename(script))
             shutil.copyfile(script, dst_file)
 
-nll_sum = nn.CrossEntropyLoss(size_average=False, ignore_index=IGNORE_INDEX)
-nll_average = nn.CrossEntropyLoss(size_average=True, ignore_index=IGNORE_INDEX)
-nll_all = nn.CrossEntropyLoss(reduce=False, ignore_index=IGNORE_INDEX)
+nll_sum = nn.CrossEntropyLoss(reduction='sum', ignore_index=IGNORE_INDEX)
+nll_average = nn.CrossEntropyLoss(weight=torch.Tensor([ 0.04, 1]), reduction='elementwise_mean', ignore_index=IGNORE_INDEX)
+nll_all = nn.CrossEntropyLoss(reduction='none', ignore_index=IGNORE_INDEX)
 
 def train(config):
     with open(config.word_emb_file, "r") as fh:
@@ -78,9 +83,9 @@ def train(config):
         model = Model(config, word_mat, char_mat)
 
     logging('nparams {}'.format(sum([p.nelement() for p in model.parameters() if p.requires_grad])))
-    ori_model = model.cuda()
-    # ori_model = model
-    model = nn.DataParallel(ori_model)
+    # ori_model = model.cuda()
+    ori_model = model
+    # model = nn.DataParallel(ori_model)
 
     lr = config.init_lr
     optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=config.init_lr)
@@ -96,6 +101,9 @@ def train(config):
     train_metrics = {'sp_em': 0, 'sp_f1': 0, 'sp_prec': 0, 'sp_recall': 0}
 
     best_dev_sp_f1 = 0
+
+    # total_support_facts = 0
+    # total_contexes = 0
 
     for epoch in range(2):
         for data in build_train_iterator():
@@ -114,6 +122,13 @@ def train(config):
             end_mapping = Variable(data['end_mapping'])
             all_mapping = Variable(data['all_mapping'])
 
+            # total_support_facts += torch.sum(torch.sum(is_support))
+            # total_contexes += is_support.size(0) * is_support.size(1)
+
+            # continue
+
+
+
 
             predict_support = model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=False)
 
@@ -125,6 +140,17 @@ def train(config):
 
             # update train metrics
             train_metrics = update_sp(train_metrics, predict_support.view(-1, 2), is_support.view(-1))
+
+            # ps = predict_support.view(-1, 2)
+            # iss = is_support.view(-1)
+
+            # print('Predicted SP output  and ground truth:')
+            # length = predict_support.view(-1, 2).shape[0]
+            # for jj in range(length):
+            #     print(ps[jj,1] , '   :   ', iss[jj])
+
+            # temp = torch.cat([ predict_support.view(-1, 2).float(), is_support.view(-1)], dim=-1).contiguous()
+            # print(temp)
 
             optimizer.zero_grad()
             loss.backward()
@@ -154,7 +180,7 @@ def train(config):
                 model.eval()
 
                 # metrics = evaluate_batch(build_dev_iterator(), model, 5, dev_eval_file, config)
-                eval_metrics = evaluate_batch(build_dev_iterator(), model, 0, dev_eval_file, config)
+                eval_metrics = evaluate_batch(build_dev_iterator(), model, 500, dev_eval_file, config)
                 model.train()
 
                 logging('-' * 89)
@@ -181,6 +207,16 @@ def train(config):
 
                 eval_start_time = time.time()
 
+
+        total_support_facts += torch.sum(torch.sum(is_support))
+        total_contexes += is_support.size(0) * is_support.size(0)
+
+        # print('total_support_facts :', total_support_facts)
+        # print('total_contexes :', total_contexes)
+        # exit()
+
+
+
         if stop_train: break
     logging('best_dev_F1 {}'.format(best_dev_sp_f1))
 
@@ -188,9 +224,13 @@ def update_sp(metrics, predict_support, is_support):
     tp, fp, fn = 0, 0, 0
     total = is_support.shape[0]
 
+    predict_support = torch.nn.functional.softmax(predict_support, dim=1)
+
     for i in range (total):
-        predicted = predict_support[i,1] > 0 
-        ground_truth = is_support[i] == 1
+        # print('Prediction :', predict_support[i,1].item(), ', Ground truth :',  is_support[i].item())
+        predicted = predict_support[i,1] >= predict_support[i,0]
+        ground_truth = (is_support[i] == 1)
+        # print(predicted.item(), ground_truth.item())
         
         if predicted:
             # true positive
@@ -203,6 +243,7 @@ def update_sp(metrics, predict_support, is_support):
             # false negative
             if ground_truth:
                 fn +=1
+        # print(tp , fp, fn)
 
     prec = 1.0 * tp / (tp + fp) if tp + fp > 0 else 0.0
     recall = 1.0 * tp / (tp + fn) if tp + fn > 0 else 0.0
@@ -214,6 +255,21 @@ def update_sp(metrics, predict_support, is_support):
     metrics['sp_recall'] += recall
     return metrics
 
+def get_support_fact_accuracy(predict_support, is_support):
+    correct_counter = 0
+    total = is_support.shape[0]
+
+    # print(predict_support)
+    # print(is_support)
+
+    for i in range (total):
+        if (predict_support[i,1] > 0 and is_support[i] == 1 ) or (predict_support[i,1] < 0 and is_support[i] == 0 ):
+            correct_counter += 1
+
+    return correct_counter / float(total)
+
+
+
 def evaluate_batch(data_source, model, max_batches, eval_file, config):
     answer_dict = {}
     sp_dict = {}
@@ -224,18 +280,18 @@ def evaluate_batch(data_source, model, max_batches, eval_file, config):
     for step, data in enumerate(iter):
         if step >= max_batches and max_batches > 0: break
 
-        context_idxs = Variable(data['context_idxs'], volatile=True)
-        ques_idxs = Variable(data['ques_idxs'], volatile=True)
-        context_char_idxs = Variable(data['context_char_idxs'], volatile=True)
-        ques_char_idxs = Variable(data['ques_char_idxs'], volatile=True)
-        context_lens = Variable(data['context_lens'], volatile=True)
-        y1 = Variable(data['y1'], volatile=True)
-        y2 = Variable(data['y2'], volatile=True)
-        q_type = Variable(data['q_type'], volatile=True)
-        is_support = Variable(data['is_support'], volatile=True)
-        start_mapping = Variable(data['start_mapping'], volatile=True)
-        end_mapping = Variable(data['end_mapping'], volatile=True)
-        all_mapping = Variable(data['all_mapping'], volatile=True)
+        context_idxs = Variable(data['context_idxs'], volatile=True).cpu()
+        ques_idxs = Variable(data['ques_idxs'], volatile=True).cpu()
+        context_char_idxs = Variable(data['context_char_idxs'], volatile=True).cpu()
+        ques_char_idxs = Variable(data['ques_char_idxs'], volatile=True).cpu()
+        context_lens = Variable(data['context_lens'], volatile=True).cpu()
+        y1 = Variable(data['y1'], volatile=True).cpu()
+        y2 = Variable(data['y2'], volatile=True).cpu()
+        q_type = Variable(data['q_type'], volatile=True).cpu()
+        is_support = Variable(data['is_support'], volatile=True).cpu()
+        start_mapping = Variable(data['start_mapping'], volatile=True).cpu()
+        end_mapping = Variable(data['end_mapping'], volatile=True).cpu()
+        all_mapping = Variable(data['all_mapping'], volatile=True).cpu()
 
 
         predict_support= model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=True)
@@ -349,11 +405,11 @@ def test(config):
         model = SPModel(config, word_mat, char_mat)
     else:
         model = Model(config, word_mat, char_mat)
-    ori_model = model.cuda()
-    # ori_model = model
+    # ori_model = model.cuda()
+    ori_model = model
     ori_model.load_state_dict(torch.load(os.path.join(config.save, 'model.pt')))
     model = ori_model
-    model = nn.DataParallel(ori_model)
+    # model = nn.DataParallel(ori_model)
 
     model.eval()
     predict(build_dev_iterator(), model, dev_eval_file, config, config.prediction_file)
