@@ -36,7 +36,7 @@ def create_exp_dir(path, scripts_to_save=None):
             shutil.copyfile(script, dst_file)
 
 nll_sum = nn.CrossEntropyLoss(reduction='sum', ignore_index=IGNORE_INDEX)
-nll_average = nn.CrossEntropyLoss(weight=torch.Tensor([ 0.04, 1]), reduction='elementwise_mean', ignore_index=IGNORE_INDEX)
+nll_average = nn.CrossEntropyLoss(weight=torch.Tensor([ 0.04, 1]).cuda(), reduction='elementwise_mean', ignore_index=IGNORE_INDEX)
 nll_all = nn.CrossEntropyLoss(reduction='none', ignore_index=IGNORE_INDEX)
 
 def train(config):
@@ -68,8 +68,9 @@ def train(config):
         logging('    - {} : {}'.format(k, v))
 
     logging("Building model...")
-    train_buckets = get_buckets(config.train_record_file)
+    # train_buckets = get_buckets(config.train_record_file)
     dev_buckets = get_buckets(config.dev_record_file)
+    train_buckets = dev_buckets
 
     def build_train_iterator():
         return DataIterator(train_buckets, config.batch_size, config.para_limit, config.ques_limit, config.char_limit, True, config.sent_limit)
@@ -83,9 +84,9 @@ def train(config):
         model = Model(config, word_mat, char_mat)
 
     logging('nparams {}'.format(sum([p.nelement() for p in model.parameters() if p.requires_grad])))
-    # ori_model = model.cuda()
-    ori_model = model
-    # model = nn.DataParallel(ori_model)
+    ori_model = model.cuda()
+    # ori_model = model
+    model = nn.DataParallel(ori_model)
 
     lr = config.init_lr
     optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=config.init_lr)
@@ -405,11 +406,11 @@ def test(config):
         model = SPModel(config, word_mat, char_mat)
     else:
         model = Model(config, word_mat, char_mat)
-    # ori_model = model.cuda()
-    ori_model = model
+    ori_model = model.cuda()
+    # ori_model = model
     ori_model.load_state_dict(torch.load(os.path.join(config.save, 'model.pt')))
-    model = ori_model
-    # model = nn.DataParallel(ori_model)
+    # model = ori_model
+    model = nn.DataParallel(ori_model)
 
     model.eval()
     predict(build_dev_iterator(), model, dev_eval_file, config, config.prediction_file)
