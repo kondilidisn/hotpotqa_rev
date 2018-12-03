@@ -1,0 +1,137 @@
+Config
+    - mode : train
+    - data_file : None
+    - glove_word_file : glove.840B.300d.txt
+    - save : HOTPOT-20181201-004124
+    - word_emb_file : word_emb.json
+    - char_emb_file : char_emb.json
+    - train_eval_file : train_eval.json
+    - dev_eval_file : dev_eval.json
+    - test_eval_file : test_eval.json
+    - word2idx_file : word2idx.json
+    - char2idx_file : char2idx.json
+    - idx2word_file : idx2word.json
+    - idx2char_file : idx2char.json
+    - train_record_file : train_record.pkl
+    - dev_record_file : dev_record.pkl
+    - test_record_file : test_record.pkl
+    - glove_char_size : 94
+    - glove_word_size : 2200000
+    - glove_dim : 300
+    - char_dim : 8
+    - para_limit : 2250
+    - ques_limit : 80
+    - sent_limit : 100
+    - char_limit : 16
+    - batch_size : 24
+    - checkpoint : 1000
+    - period : 100
+    - init_lr : 0.1
+    - keep_prob : 1.0
+    - hidden : 80
+    - char_hidden : 100
+    - patience : 1
+    - seed : 13
+    - sp_lambda : 1.0
+    - data_split : train
+    - fullwiki : False
+    - prediction_file : None
+    - sp_threshold : 0.3
+Building model...
+nparams 550877
+| epoch   0 | step    100 | lr 0.10000 | ms/batch 2130.33 | train loss   68.275 | SP EM    0.000 | SP f1    0.071 | SP Prec    0.037 | SP Recall    1.000
+| epoch   0 | step    200 | lr 0.10000 | ms/batch 2122.72 | train loss   65.115 | SP EM    0.000 | SP f1    0.107 | SP Prec    0.057 | SP Recall    0.983
+| epoch   0 | step    300 | lr 0.10000 | ms/batch 2085.28 | train loss   56.464 | SP EM    0.000 | SP f1    0.166 | SP Prec    0.094 | SP Recall    0.774
+| epoch   0 | step    400 | lr 0.10000 | ms/batch 2069.64 | train loss   53.815 | SP EM    0.000 | SP f1    0.181 | SP Prec    0.104 | SP Recall    0.757
+| epoch   0 | step    500 | lr 0.10000 | ms/batch 2095.32 | train loss   52.273 | SP EM    0.000 | SP f1    0.185 | SP Prec    0.106 | SP Recall    0.776
+| epoch   0 | step    600 | lr 0.10000 | ms/batch 2092.47 | train loss   50.557 | SP EM    0.000 | SP f1    0.197 | SP Prec    0.113 | SP Recall    0.791
+| epoch   0 | step    700 | lr 0.10000 | ms/batch 2057.50 | train loss   49.670 | SP EM    0.000 | SP f1    0.201 | SP Prec    0.116 | SP Recall    0.803
+| epoch   0 | step    800 | lr 0.10000 | ms/batch 2048.40 | train loss   48.237 | SP EM    0.000 | SP f1    0.207 | SP Prec    0.119 | SP Recall    0.809
+| epoch   0 | step    900 | lr 0.10000 | ms/batch 2048.85 | train loss   48.053 | SP EM    0.000 | SP f1    0.206 | SP Prec    0.119 | SP Recall    0.816
+| epoch   0 | step   1000 | lr 0.10000 | ms/batch 2045.23 | train loss   47.208 | SP EM    0.000 | SP f1    0.212 | SP Prec    0.123 | SP Recall    0.825
+-----------------------------------------------------------------------------------------
+| eval      1 in epoch   0 | time: 2487.02s | dev loss    0.477| SP EM    0.000 | SP f1    0.223 | SP Prec    0.130 | SP Recall    0.781
+-----------------------------------------------------------------------------------------
+| epoch   0 | step   1100 | lr 0.10000 | ms/batch 6118.35 | train loss   45.912 | SP EM    0.000 | SP f1    0.219 | SP Prec    0.127 | SP Recall    0.828
+| epoch   0 | step   1200 | lr 0.10000 | ms/batch 2051.25 | train loss   45.347 | SP EM    0.000 | SP f1    0.222 | SP Prec    0.129 | SP Recall    0.833
+| epoch   0 | step   1300 | lr 0.10000 | ms/batch 2050.77 | train loss   44.637 | SP EM    0.000 | SP f1    0.228 | SP Prec    0.133 | SP Recall    0.833
+| epoch   0 | step   1400 | lr 0.10000 | ms/batch 2068.92 | train loss   43.471 | SP EM    0.000 | SP f1    0.241 | SP Prec    0.142 | SP Recall    0.845
+| epoch   0 | step   1500 | lr 0.10000 | ms/batch 2055.38 | train loss   42.657 | SP EM    0.000 | SP f1    0.251 | SP Prec    0.149 | SP Recall    0.847
+| epoch   0 | step   1600 | lr 0.10000 | ms/batch 2075.27 | train loss   42.138 | SP EM    0.000 | SP f1    0.254 | SP Prec    0.151 | SP Recall    0.845
+| epoch   0 | step   1700 | lr 0.10000 | ms/batch 2005.16 | train loss   40.790 | SP EM    0.000 | SP f1    0.269 | SP Prec    0.162 | SP Recall    0.848
+| epoch   0 | step   1800 | lr 0.10000 | ms/batch 2031.77 | train loss   39.908 | SP EM    0.000 | SP f1    0.274 | SP Prec    0.165 | SP Recall    0.853
+| epoch   0 | step   1900 | lr 0.10000 | ms/batch 1985.39 | train loss   38.854 | SP EM    0.000 | SP f1    0.281 | SP Prec    0.169 | SP Recall    0.855
+| epoch   0 | step   2000 | lr 0.10000 | ms/batch 2051.58 | train loss   37.973 | SP EM    0.000 | SP f1    0.290 | SP Prec    0.176 | SP Recall    0.855
+-----------------------------------------------------------------------------------------
+| eval      2 in epoch   0 | time: 3124.76s | dev loss    0.387| SP EM    0.000 | SP f1    0.289 | SP Prec    0.175 | SP Recall    0.837
+-----------------------------------------------------------------------------------------
+| epoch   0 | step   2100 | lr 0.10000 | ms/batch 6159.23 | train loss   36.881 | SP EM    0.000 | SP f1    0.305 | SP Prec    0.187 | SP Recall    0.863
+| epoch   0 | step   2200 | lr 0.10000 | ms/batch 2027.84 | train loss   36.882 | SP EM    0.000 | SP f1    0.302 | SP Prec    0.185 | SP Recall    0.856
+| epoch   0 | step   2300 | lr 0.10000 | ms/batch 2043.43 | train loss   35.815 | SP EM    0.000 | SP f1    0.312 | SP Prec    0.192 | SP Recall    0.863
+| epoch   0 | step   2400 | lr 0.10000 | ms/batch 2037.16 | train loss   35.886 | SP EM    0.000 | SP f1    0.309 | SP Prec    0.190 | SP Recall    0.865
+| epoch   0 | step   2500 | lr 0.10000 | ms/batch 2034.24 | train loss   35.497 | SP EM    0.000 | SP f1    0.315 | SP Prec    0.194 | SP Recall    0.863
+| epoch   0 | step   2600 | lr 0.10000 | ms/batch 2038.68 | train loss   34.409 | SP EM    0.000 | SP f1    0.331 | SP Prec    0.206 | SP Recall    0.868
+| epoch   0 | step   2700 | lr 0.10000 | ms/batch 2043.23 | train loss   34.001 | SP EM    0.000 | SP f1    0.336 | SP Prec    0.210 | SP Recall    0.864
+| epoch   0 | step   2800 | lr 0.10000 | ms/batch 2053.48 | train loss   34.051 | SP EM    0.000 | SP f1    0.337 | SP Prec    0.211 | SP Recall    0.868
+| epoch   0 | step   2900 | lr 0.10000 | ms/batch 2021.81 | train loss   33.801 | SP EM    0.000 | SP f1    0.338 | SP Prec    0.211 | SP Recall    0.865
+| epoch   0 | step   3000 | lr 0.10000 | ms/batch 2072.56 | train loss   33.333 | SP EM    0.000 | SP f1    0.338 | SP Prec    0.211 | SP Recall    0.870
+-----------------------------------------------------------------------------------------
+| eval      3 in epoch   0 | time: 2453.29s | dev loss    0.371| SP EM    0.000 | SP f1    0.390 | SP Prec    0.260 | SP Recall    0.782
+-----------------------------------------------------------------------------------------
+| epoch   0 | step   3100 | lr 0.10000 | ms/batch 6151.38 | train loss   33.248 | SP EM    0.000 | SP f1    0.339 | SP Prec    0.211 | SP Recall    0.871
+| epoch   0 | step   3200 | lr 0.10000 | ms/batch 2110.38 | train loss   32.953 | SP EM    0.000 | SP f1    0.341 | SP Prec    0.213 | SP Recall    0.872
+| epoch   0 | step   3300 | lr 0.10000 | ms/batch 2052.93 | train loss   32.773 | SP EM    0.000 | SP f1    0.341 | SP Prec    0.212 | SP Recall    0.874
+| epoch   0 | step   3400 | lr 0.10000 | ms/batch 2032.48 | train loss   32.745 | SP EM    0.000 | SP f1    0.340 | SP Prec    0.213 | SP Recall    0.874
+| epoch   0 | step   3500 | lr 0.10000 | ms/batch 2044.33 | train loss   31.881 | SP EM    0.000 | SP f1    0.351 | SP Prec    0.221 | SP Recall    0.875
+| epoch   0 | step   3600 | lr 0.10000 | ms/batch 2018.52 | train loss   32.558 | SP EM    0.000 | SP f1    0.344 | SP Prec    0.215 | SP Recall    0.874
+| epoch   0 | step   3700 | lr 0.10000 | ms/batch 2031.36 | train loss   32.400 | SP EM    0.000 | SP f1    0.346 | SP Prec    0.217 | SP Recall    0.879
+| epoch   1 | step   3800 | lr 0.10000 | ms/batch 2017.36 | train loss   31.055 | SP EM    0.000 | SP f1    0.356 | SP Prec    0.224 | SP Recall    0.884
+| epoch   1 | step   3900 | lr 0.10000 | ms/batch 2045.12 | train loss   31.134 | SP EM    0.000 | SP f1    0.357 | SP Prec    0.225 | SP Recall    0.885
+| epoch   1 | step   4000 | lr 0.10000 | ms/batch 2025.28 | train loss   31.416 | SP EM    0.000 | SP f1    0.351 | SP Prec    0.221 | SP Recall    0.884
+-----------------------------------------------------------------------------------------
+| eval      4 in epoch   1 | time: 2451.12s | dev loss    0.341| SP EM    0.000 | SP f1    0.382 | SP Prec    0.249 | SP Recall    0.825
+-----------------------------------------------------------------------------------------
+| epoch   1 | step   4100 | lr 0.05000 | ms/batch 6137.61 | train loss   30.701 | SP EM    0.000 | SP f1    0.360 | SP Prec    0.227 | SP Recall    0.883
+| epoch   1 | step   4200 | lr 0.05000 | ms/batch 2047.22 | train loss   31.295 | SP EM    0.000 | SP f1    0.352 | SP Prec    0.220 | SP Recall    0.883
+| epoch   1 | step   4300 | lr 0.05000 | ms/batch 2028.10 | train loss   29.987 | SP EM    0.000 | SP f1    0.363 | SP Prec    0.228 | SP Recall    0.892
+| epoch   1 | step   4400 | lr 0.05000 | ms/batch 2025.14 | train loss   30.371 | SP EM    0.000 | SP f1    0.362 | SP Prec    0.228 | SP Recall    0.886
+| epoch   1 | step   4500 | lr 0.05000 | ms/batch 2061.11 | train loss   30.834 | SP EM    0.000 | SP f1    0.356 | SP Prec    0.223 | SP Recall    0.890
+| epoch   1 | step   4600 | lr 0.05000 | ms/batch 2058.68 | train loss   30.738 | SP EM    0.000 | SP f1    0.359 | SP Prec    0.225 | SP Recall    0.888
+| epoch   1 | step   4700 | lr 0.05000 | ms/batch 2002.01 | train loss   29.806 | SP EM    0.000 | SP f1    0.368 | SP Prec    0.233 | SP Recall    0.894
+| epoch   1 | step   4800 | lr 0.05000 | ms/batch 2025.66 | train loss   29.836 | SP EM    0.000 | SP f1    0.370 | SP Prec    0.234 | SP Recall    0.893
+| epoch   1 | step   4900 | lr 0.05000 | ms/batch 2040.98 | train loss   30.098 | SP EM    0.000 | SP f1    0.368 | SP Prec    0.233 | SP Recall    0.889
+| epoch   1 | step   5000 | lr 0.05000 | ms/batch 2020.28 | train loss   29.085 | SP EM    0.000 | SP f1    0.376 | SP Prec    0.239 | SP Recall    0.895
+-----------------------------------------------------------------------------------------
+| eval      5 in epoch   1 | time: 2439.45s | dev loss    0.322| SP EM    0.000 | SP f1    0.339 | SP Prec    0.210 | SP Recall    0.878
+-----------------------------------------------------------------------------------------
+| epoch   1 | step   5100 | lr 0.02500 | ms/batch 6042.02 | train loss   29.579 | SP EM    0.000 | SP f1    0.369 | SP Prec    0.233 | SP Recall    0.890
+| epoch   1 | step   5200 | lr 0.02500 | ms/batch 2051.89 | train loss   28.905 | SP EM    0.000 | SP f1    0.380 | SP Prec    0.242 | SP Recall    0.898
+| epoch   1 | step   5300 | lr 0.02500 | ms/batch 2026.66 | train loss   29.296 | SP EM    0.000 | SP f1    0.376 | SP Prec    0.239 | SP Recall    0.895
+| epoch   1 | step   5400 | lr 0.02500 | ms/batch 2026.91 | train loss   28.721 | SP EM    0.000 | SP f1    0.377 | SP Prec    0.239 | SP Recall    0.900
+| epoch   1 | step   5500 | lr 0.02500 | ms/batch 1995.26 | train loss   29.688 | SP EM    0.000 | SP f1    0.366 | SP Prec    0.231 | SP Recall    0.890
+| epoch   1 | step   5600 | lr 0.02500 | ms/batch 2012.32 | train loss   29.368 | SP EM    0.000 | SP f1    0.371 | SP Prec    0.235 | SP Recall    0.894
+| epoch   1 | step   5700 | lr 0.02500 | ms/batch 2035.16 | train loss   29.303 | SP EM    0.000 | SP f1    0.372 | SP Prec    0.236 | SP Recall    0.893
+| epoch   1 | step   5800 | lr 0.02500 | ms/batch 2027.33 | train loss   28.914 | SP EM    0.000 | SP f1    0.375 | SP Prec    0.238 | SP Recall    0.900
+| epoch   1 | step   5900 | lr 0.02500 | ms/batch 2004.15 | train loss   29.455 | SP EM    0.000 | SP f1    0.367 | SP Prec    0.232 | SP Recall    0.894
+| epoch   1 | step   6000 | lr 0.02500 | ms/batch 2031.86 | train loss   28.771 | SP EM    0.000 | SP f1    0.373 | SP Prec    0.236 | SP Recall    0.898
+-----------------------------------------------------------------------------------------
+| eval      6 in epoch   1 | time: 2423.51s | dev loss    0.313| SP EM    0.000 | SP f1    0.355 | SP Prec    0.223 | SP Recall    0.878
+-----------------------------------------------------------------------------------------
+| epoch   1 | step   6100 | lr 0.01250 | ms/batch 6051.92 | train loss   28.286 | SP EM    0.000 | SP f1    0.382 | SP Prec    0.243 | SP Recall    0.901
+| epoch   1 | step   6200 | lr 0.01250 | ms/batch 2056.12 | train loss   28.651 | SP EM    0.000 | SP f1    0.377 | SP Prec    0.239 | SP Recall    0.901
+| epoch   1 | step   6300 | lr 0.01250 | ms/batch 2008.26 | train loss   28.257 | SP EM    0.000 | SP f1    0.379 | SP Prec    0.240 | SP Recall    0.897
+| epoch   1 | step   6400 | lr 0.01250 | ms/batch 2034.39 | train loss   29.233 | SP EM    0.000 | SP f1    0.370 | SP Prec    0.233 | SP Recall    0.893
+| epoch   1 | step   6500 | lr 0.01250 | ms/batch 2013.04 | train loss   28.769 | SP EM    0.000 | SP f1    0.377 | SP Prec    0.238 | SP Recall    0.901
+| epoch   1 | step   6600 | lr 0.01250 | ms/batch 2012.90 | train loss   28.875 | SP EM    0.000 | SP f1    0.373 | SP Prec    0.235 | SP Recall    0.902
+| epoch   1 | step   6700 | lr 0.01250 | ms/batch 2045.03 | train loss   28.981 | SP EM    0.000 | SP f1    0.373 | SP Prec    0.236 | SP Recall    0.898
+| epoch   1 | step   6800 | lr 0.01250 | ms/batch 2010.37 | train loss   28.106 | SP EM    0.000 | SP f1    0.381 | SP Prec    0.242 | SP Recall    0.900
+| epoch   1 | step   6900 | lr 0.01250 | ms/batch 2036.12 | train loss   28.503 | SP EM    0.000 | SP f1    0.380 | SP Prec    0.241 | SP Recall    0.899
+| epoch   1 | step   7000 | lr 0.01250 | ms/batch 2021.92 | train loss   27.845 | SP EM    0.000 | SP f1    0.383 | SP Prec    0.244 | SP Recall    0.902
+-----------------------------------------------------------------------------------------
+| eval      7 in epoch   1 | time: 2429.53s | dev loss    0.314| SP EM    0.000 | SP f1    0.383 | SP Prec    0.247 | SP Recall    0.859
+-----------------------------------------------------------------------------------------
+| epoch   1 | step   7100 | lr 0.00625 | ms/batch 6038.38 | train loss   28.596 | SP EM    0.000 | SP f1    0.377 | SP Prec    0.239 | SP Recall    0.894
+| epoch   1 | step   7200 | lr 0.00625 | ms/batch 2062.74 | train loss   28.109 | SP EM    0.000 | SP f1    0.382 | SP Prec    0.243 | SP Recall    0.898
+| epoch   1 | step   7300 | lr 0.00625 | ms/batch 2079.27 | train loss   28.155 | SP EM    0.000 | SP f1    0.378 | SP Prec    0.240 | SP Recall    0.899
+| epoch   1 | step   7400 | lr 0.00625 | ms/batch 2031.79 | train loss   29.170 | SP EM    0.000 | SP f1    0.372 | SP Prec    0.235 | SP Recall    0.896
+best_dev_F1 0.3901553246839844
