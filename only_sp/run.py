@@ -68,9 +68,9 @@ def train(config):
         logging('    - {} : {}'.format(k, v))
 
     logging("Building model...")
-    # train_buckets = get_buckets(config.train_record_file)
+    train_buckets = get_buckets(config.train_record_file)
     dev_buckets = get_buckets(config.dev_record_file)
-    train_buckets = dev_buckets
+    # train_buckets = dev_buckets
 
     def build_train_iterator():
         return DataIterator(train_buckets, config.batch_size, config.para_limit, config.ques_limit, config.char_limit, True, config.sent_limit)
@@ -133,6 +133,9 @@ def train(config):
 
             predict_support = model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=False)
 
+            # print('Model\'s output:', predict_support.size())
+            # print('Model\'s output reshaped :', predict_support.view(-1, 2).size())
+
             # logit1, logit2, predict_type, predict_support = model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=False)
             # loss_1 = (nll_sum(predict_type, q_type) + nll_sum(logit1, y1) + nll_sum(logit2, y2)) / context_idxs.size(0)
             loss_2 = nll_average(predict_support.view(-1, 2), is_support.view(-1))
@@ -142,6 +145,8 @@ def train(config):
             # update train metrics
             train_metrics = update_sp(train_metrics, predict_support.view(-1, 2), is_support.view(-1))
 
+            # print('Exiting')
+            # exit()
             # ps = predict_support.view(-1, 2)
             # iss = is_support.view(-1)
 
@@ -181,7 +186,7 @@ def train(config):
                 model.eval()
 
                 # metrics = evaluate_batch(build_dev_iterator(), model, 5, dev_eval_file, config)
-                eval_metrics = evaluate_batch(build_dev_iterator(), model, 500, dev_eval_file, config)
+                eval_metrics = evaluate_batch(build_dev_iterator(), model, 0, dev_eval_file, config)
                 model.train()
 
                 logging('-' * 89)
@@ -198,7 +203,7 @@ def train(config):
                 else:
                     cur_patience += 1
                     if cur_patience >= config.patience:
-                        lr /= 2.0
+                        lr *= 0.75
                         for param_group in optimizer.param_groups:
                             param_group['lr'] = lr
                         if lr < config.init_lr * 1e-2:
@@ -209,8 +214,8 @@ def train(config):
                 eval_start_time = time.time()
 
 
-        total_support_facts += torch.sum(torch.sum(is_support))
-        total_contexes += is_support.size(0) * is_support.size(0)
+        # total_support_facts += torch.sum(torch.sum(is_support))
+        # total_contexes += is_support.size(0) * is_support.size(0)
 
         # print('total_support_facts :', total_support_facts)
         # print('total_contexes :', total_contexes)
@@ -281,18 +286,18 @@ def evaluate_batch(data_source, model, max_batches, eval_file, config):
     for step, data in enumerate(iter):
         if step >= max_batches and max_batches > 0: break
 
-        context_idxs = Variable(data['context_idxs'], volatile=True).cpu()
-        ques_idxs = Variable(data['ques_idxs'], volatile=True).cpu()
-        context_char_idxs = Variable(data['context_char_idxs'], volatile=True).cpu()
-        ques_char_idxs = Variable(data['ques_char_idxs'], volatile=True).cpu()
-        context_lens = Variable(data['context_lens'], volatile=True).cpu()
-        y1 = Variable(data['y1'], volatile=True).cpu()
-        y2 = Variable(data['y2'], volatile=True).cpu()
-        q_type = Variable(data['q_type'], volatile=True).cpu()
-        is_support = Variable(data['is_support'], volatile=True).cpu()
-        start_mapping = Variable(data['start_mapping'], volatile=True).cpu()
-        end_mapping = Variable(data['end_mapping'], volatile=True).cpu()
-        all_mapping = Variable(data['all_mapping'], volatile=True).cpu()
+        context_idxs = Variable(data['context_idxs'], volatile=True)
+        ques_idxs = Variable(data['ques_idxs'], volatile=True)
+        context_char_idxs = Variable(data['context_char_idxs'], volatile=True)
+        ques_char_idxs = Variable(data['ques_char_idxs'], volatile=True)
+        context_lens = Variable(data['context_lens'], volatile=True)
+        y1 = Variable(data['y1'], volatile=True)
+        y2 = Variable(data['y2'], volatile=True)
+        q_type = Variable(data['q_type'], volatile=True)
+        is_support = Variable(data['is_support'], volatile=True)
+        start_mapping = Variable(data['start_mapping'], volatile=True)
+        end_mapping = Variable(data['end_mapping'], volatile=True)
+        all_mapping = Variable(data['all_mapping'], volatile=True)
 
 
         predict_support= model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=True)
