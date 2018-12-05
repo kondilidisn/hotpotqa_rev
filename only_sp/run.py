@@ -86,10 +86,44 @@ def train(config):
     logging('nparams {}'.format(sum([p.nelement() for p in model.parameters() if p.requires_grad])))
     ori_model = model.cuda()
     # ori_model = model
-    model = nn.DataParallel(ori_model)
 
-    lr = config.init_lr
+    # flag (checking if the learning will be loaded from the file or not)
+    lr = 0
+
+    # if the training was interrupted, then we load last trained state of the model
+    logging('Checking if previous training was interrupted...')
+    # if os.path.exists('last_model.pt'):
+    for dp, dn, filenames in os.walk('.'):
+        model_filenames = []
+        corresponding_learning_rates = []
+        for ff in filenames:
+            if ff.endswith("last_model.pt"):
+                # putting all found models on list
+                lr = float(ff.split('_')[0])
+                model_filenames.append(ff)
+                corresponding_learning_rates.append(lr)
+
+        if len( model_filenames) > 0:
+            # selecting the model with the smallest learning rate to be loaded
+            loading_model_index = np.argmin(corresponding_learning_rates)
+            # continuing with the previous learning rate
+            lr = corresponding_learning_rates[loading_model_index]
+
+            logging('Previous training was interrupted so loading last saved state model and continuing.')
+            logging('Was stopped with learning rate: ' +  str( corresponding_learning_rates[loading_model_index] ) )
+            logging('Loading file : ' + model_filenames[loading_model_index])
+            ori_model.load_state_dict(torch.load(model_filenames[loading_model_index]))
+
+
+
+    model = nn.DataParallel(ori_model)
+    # if the learning rate was not loaded then we set it equal to the initial one
+    if lr == 0:
+        lr = config.init_lr
+
     optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=config.init_lr)
+    # cur_lr_decrease_patience = 0
+    # cur_early_stop_patience = 0
     cur_patience = 0
     total_loss = 0
     global_step = 0
@@ -123,44 +157,24 @@ def train(config):
             end_mapping = Variable(data['end_mapping'])
             all_mapping = Variable(data['all_mapping'])
 
-            # total_support_facts += torch.sum(torch.sum(is_support))
-            # total_contexes += is_support.size(0) * is_support.size(1)
-
-            # continue
-
-
-
-
+            # get model's output
             predict_support = model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=False)
 
-            # print('Model\'s output:', predict_support.size())
-            # print('Model\'s output reshaped :', predict_support.view(-1, 2).size())
+            # calculating loss
+            loss_2 = nll_average(predict_support.view(-1, 2), is_support.view(-1) )
 
-            # logit1, logit2, predict_type, predict_support = model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=False)
-            # loss_1 = (nll_sum(predict_type, q_type) + nll_sum(logit1, y1) + nll_sum(logit2, y2)) / context_idxs.size(0)
-            loss_2 = nll_average(predict_support.view(-1, 2), is_support.view(-1))
-            # loss = loss_1 + config.sp_lambda * loss_2
             loss = loss_2
 
             # update train metrics
-            train_metrics = update_sp(train_metrics, predict_support.view(-1, 2), is_support.view(-1))
+            train_metrics = update_sp(train_metrics, predict_support, is_support)
 
-            # print('Exiting')
-            # exit()
-            # ps = predict_support.view(-1, 2)
-            # iss = is_support.view(-1)
-
-            # print('Predicted SP output  and ground truth:')
-            # length = predict_support.view(-1, 2).shape[0]
-            # for jj in range(length):
-            #     print(ps[jj,1] , '   :   ', iss[jj])
-
-            # temp = torch.cat([ predict_support.view(-1, 2).float(), is_support.view(-1)], dim=-1).contiguous()
-            # print(temp)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
+            # logging('Saving model...')
+            torch.save(ori_model.state_dict(), os.path.join( str(lr) + '_' + 'last_model.pt') )
 
 
             total_loss += loss.data.item()
@@ -196,9 +210,12 @@ def train(config):
                     epoch, time.time()-eval_start_time, eval_metrics['loss'], eval_metrics['sp_em'], eval_metrics['sp_f1'], eval_metrics['sp_prec'], eval_metrics['sp_recall']))
                 logging('-' * 89)
 
+                eval_start_time = time.time()
+
                 if eval_metrics['sp_f1'] > best_dev_sp_f1:
                     best_dev_sp_f1 = eval_metrics['sp_f1']
                     torch.save(ori_model.state_dict(), os.path.join(config.save, 'model.pt'))
+                    # cur_lr_decrease_patience = 0
                     cur_patience = 0
                 else:
                     cur_patience += 1
@@ -210,71 +227,85 @@ def train(config):
                             stop_train = True
                             break
                         cur_patience = 0
+                        
+                    # cur_lr_decrease_patience += 1
+                    # if cur_lr_decrease_patience >= config.lr_decrease_patience:
+                    #     lr *= 0.75
+                    #     cur_early_stop_patience +=1
+                    #     if cur_early_stop_patience >= config.early_stop_patience:
+                    #         stop_train = True
+                    #         break
 
-                eval_start_time = time.time()
-
-
-        # total_support_facts += torch.sum(torch.sum(is_support))
-        # total_contexes += is_support.size(0) * is_support.size(0)
-
-        # print('total_support_facts :', total_support_facts)
-        # print('total_contexes :', total_contexes)
-        # exit()
-
+                    #     for param_group in optimizer.param_groups:
+                    #         param_group['lr'] = lr
 
 
         if stop_train: break
     logging('best_dev_F1 {}'.format(best_dev_sp_f1))
 
+    # delete last temporary trained model, since the training has completed
+    print('Deleting last temp model files...')
+    for dp, dn, filenames in os.walk('.'):
+        for ff in filenames:
+            if ff.endswith("last_model.pt"):
+                os.remove(ff)
+
 def update_sp(metrics, predict_support, is_support):
-    tp, fp, fn = 0, 0, 0
-    total = is_support.shape[0]
+    setneces_per_sample = is_support.size()[1]
+    bsz = is_support.size()[0]
 
-    predict_support = torch.nn.functional.softmax(predict_support, dim=1)
+    predict_support = torch.nn.functional.softmax(predict_support, dim=2)
 
-    for i in range (total):
-        # print('Prediction :', predict_support[i,1].item(), ', Ground truth :',  is_support[i].item())
-        predicted = predict_support[i,1] >= predict_support[i,0]
-        ground_truth = (is_support[i] == 1)
-        # print(predicted.item(), ground_truth.item())
-        
-        if predicted:
-            # true positive
-            if ground_truth:
-                tp += 1
-            # false positive
+    batch_prec = 0
+    batch_recall = 0
+    batch_f1 = 0
+    batch_em = 0
+
+    for b in range(bsz):
+        tp, fp, fn = 0, 0, 0
+
+        for i in range (setneces_per_sample):
+            # if this sentences was created for batch padding purposes then we move to the next sample
+            if is_support[b,i] == -100:
+                continue
+
+            # print('Prediction :', predict_support[i,1].item(), ', Ground truth :',  is_support[i].item())
+            predicted = predict_support[b,i,1] >= predict_support[b,i,0]
+            ground_truth = (is_support[b,i] == 1)
+            # print(predicted.item(), ground_truth.item())
+            
+            if predicted:
+                # true positive
+                if ground_truth:
+                    tp += 1
+                # false positive
+                else:
+                    fp += 1
             else:
-                fp += 1
-        else:
-            # false negative
-            if ground_truth:
-                fn +=1
-        # print(tp , fp, fn)
+                # false negative
+                if ground_truth:
+                    fn +=1
+            # print(tp , fp, fn)
 
-    prec = 1.0 * tp / (tp + fp) if tp + fp > 0 else 0.0
-    recall = 1.0 * tp / (tp + fn) if tp + fn > 0 else 0.0
-    f1 = 2 * prec * recall / (prec + recall) if prec + recall > 0 else 0.0
-    em = 1.0 if fp + fn == 0 else 0.0
-    metrics['sp_em'] += em
-    metrics['sp_f1'] += f1
-    metrics['sp_prec'] += prec
-    metrics['sp_recall'] += recall
+        # calculate evaluation metrics per sample
+
+        prec = 1.0 * tp / (tp + fp) if tp + fp > 0 else 0.0
+        recall = 1.0 * tp / (tp + fn) if tp + fn > 0 else 0.0
+        f1 = 2 * prec * recall / (prec + recall) if prec + recall > 0 else 0.0
+        em = 1.0 if fp + fn == 0 else 0.0
+        # add them in order to calculate the batch average
+        batch_prec += prec
+        batch_recall += recall
+        batch_f1 += f1
+        batch_em += em
+
+
+    # adding the average evaluations of this step to the total evaluations
+    metrics['sp_em'] += batch_em / bsz
+    metrics['sp_f1'] += batch_f1 / bsz
+    metrics['sp_prec'] += batch_prec / bsz
+    metrics['sp_recall'] += batch_recall / bsz
     return metrics
-
-def get_support_fact_accuracy(predict_support, is_support):
-    correct_counter = 0
-    total = is_support.shape[0]
-
-    # print(predict_support)
-    # print(is_support)
-
-    for i in range (total):
-        if (predict_support[i,1] > 0 and is_support[i] == 1 ) or (predict_support[i,1] < 0 and is_support[i] == 0 ):
-            correct_counter += 1
-
-    return correct_counter / float(total)
-
-
 
 def evaluate_batch(data_source, model, max_batches, eval_file, config):
     answer_dict = {}
@@ -303,11 +334,11 @@ def evaluate_batch(data_source, model, max_batches, eval_file, config):
         predict_support= model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=True)
         
         # update eval metrics
-        eval_metrics = update_sp(eval_metrics, predict_support.view(-1, 2), is_support.view(-1))
+        eval_metrics = update_sp(eval_metrics, predict_support, is_support)
 
         # logit1, logit2, predict_type, predict_support, yp1, yp2 = model(context_idxs, ques_idxs, context_char_idxs, ques_char_idxs, context_lens, start_mapping, end_mapping, all_mapping, return_yp=True)
         # loss = (nll_sum(predict_type, q_type) + nll_sum(logit1, y1) + nll_sum(logit2, y2)) / context_idxs.size(0) + config.sp_lambda * nll_average(predict_support.view(-1, 2), is_support.view(-1))
-        
+
         loss =  nll_average(predict_support.view(-1, 2), is_support.view(-1))
         
         # answer_dict_ = convert_tokens(eval_file, data['ids'], yp1.data.cpu().numpy().tolist(), yp2.data.cpu().numpy().tolist(), np.argmax(predict_type.data.cpu().numpy(), 1))
@@ -321,7 +352,7 @@ def evaluate_batch(data_source, model, max_batches, eval_file, config):
     for key in eval_metrics:
         eval_metrics[key] /= float(step_cnt)
 
-    eval_metrics['loss'] = total_loss / step_cnt
+    eval_metrics['loss'] = total_loss
 
     # return metrics
     return eval_metrics
